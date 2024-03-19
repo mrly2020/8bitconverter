@@ -23,7 +23,7 @@ def pyin(audio, sr):
     t_per_frame = np.arange(0, sec_per_pyin_frame, 1 / sr)
     frame_index = 0
 
-    pbar = tqdm(total=len(f0_parsed) + 1)
+    pbar = tqdm(total=len(f0_parsed))
     while frame_index < len(f0_parsed):
         if (not v_flag[frame_index]):
             # print("Skipping not-voiced note: ", frame_index)
