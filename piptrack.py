@@ -1,5 +1,6 @@
 import librosa
 import numpy as np
+from numpy import mean
 from scipy.signal import medfilt
 from tqdm import tqdm
 
@@ -17,25 +18,24 @@ def piptrack(audio, sr):
     t_per_pitch = np.arange(0, seconds_per_pitch, 1/sr)
 
     pitches_parsed = np.ndarray(shape=pitches.shape, dtype=np.dtype('U4'))
-    pitches_parsed[:][:] = "NaN"
+    pitches_parsed[:, :] = "NaN"
     pitches_parsed[pitches != 0.0] = librosa.hz_to_note(pitches[pitches != 0])
     pbar = tqdm(total=len(pitches_parsed[0]))
     for t in range(len(pitches_parsed[0])):
-        expressed_pitches = pitches_parsed[:][t]
-        expressed_pitches = expressed_pitches[expressed_pitches != "NaN"]
+        full_expressed_pitches = pitches_parsed[:, t]
+        expressed_pitches = full_expressed_pitches[full_expressed_pitches != "NaN"]
 
         if len(expressed_pitches) == 0:
             output_audio = np.concatenate([output_audio, t_per_pitch * 0])
             pbar.update(1)
             continue
 
-        notes, counts = np.unique(expressed_pitches[:], return_counts=True)
-        most_frequent_note = notes[counts == max(counts)]
+        magnitude_t = magnitudes[:, t]
+        max_magnitude = magnitude_t[magnitude_t == max(magnitude_t)][0]
+        loudest_note = pitches_parsed[magnitude_t == max(magnitude_t), t][0]
 
-        if type(most_frequent_note) is np.ndarray:
-            most_frequent_note = most_frequent_note[0]
-
-        signal = notes_utils.square_signal(str(most_frequent_note), seconds_per_pitch, sr)
+        print("Expressing note {}; ".format(loudest_note))
+        signal = notes_utils.square_signal(str(loudest_note), seconds_per_pitch, sr) * max_magnitude
         output_audio = np.concatenate([output_audio, signal])
         pbar.update(1)
 
